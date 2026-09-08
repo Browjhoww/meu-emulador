@@ -2,36 +2,49 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- viewport-fit=cover garante que o jogo ocupe até a área da câmera do celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Emulador SNES</title>
   <style>
+    * {
+      box-sizing: border-box;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
     body, html {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       background-color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
       font-family: sans-serif;
+      position: fixed; /* Evita rolagem no celular */
     }
     #game-container {
       width: 100%;
       height: 100%;
-      display: none; /* Fica escondido até o clique */
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
     }
     #start-screen {
       color: #fff;
       text-align: center;
       cursor: pointer;
-      user-select: none;
+      z-index: 10;
+      padding: 20px;
+      width: 100%;
     }
     .btn-start {
       background-color: #e50914;
       color: white;
-      padding: 15px 30px;
+      padding: 16px 32px;
       font-size: 1.2rem;
       border: none;
       border-radius: 8px;
@@ -39,22 +52,18 @@
       margin-top: 15px;
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-      transition: transform 0.2s;
-    }
-    .btn-start:hover {
-      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
 
-  <!-- Tela inicial para permitir o Fullscreen -->
+  <!-- Tela Inicial -->
   <div id="start-screen">
-    <h2>🎮 Clique abaixo para iniciar em Tela Cheia</h2>
+    <h2>🎮 Clique para Iniciar em Tela Cheia</h2>
     <button class="btn-start">INICIAR JOGO</button>
   </div>
 
-  <!-- Container do Emulador -->
+  <!-- Emulador -->
   <div id="game-container">
     <div id="game"></div>
   </div>
@@ -67,25 +76,25 @@
       const startScreen = document.getElementById('start-screen');
       const gameContainer = document.getElementById('game-container');
 
-      // Função para ativar Tela Cheia no navegador
-      function requestFullscreen() {
-        const elem = document.documentElement;
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) { /* Safari */
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) { /* IE11 */
-          elem.msRequestFullscreen();
+      // Função para forçar tela cheia em celulares (Android e iOS)
+      function enableMobileFullscreen() {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) { /* Chrome Android / Safari iOS */
+          docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) {
+          docEl.msRequestFullscreen();
         }
       }
 
-      // Ao clicar na tela inicial
       startScreen.addEventListener('click', () => {
-        requestFullscreen(); // Entra em tela cheia
-        startScreen.style.display = 'none'; // Esconde o botão
-        gameContainer.style.display = 'block'; // Mostra o jogo
+        enableMobileFullscreen();
+        
+        startScreen.style.display = 'none';
+        gameContainer.style.display = 'block';
 
-        // Carrega o emulador
+        // Configuração do Emulador
         EJS_player = '#game';
         EJS_core = 'snes';
         EJS_gameUrl = `roms/${gameId}.smc`;
