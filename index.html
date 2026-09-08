@@ -2,7 +2,6 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <!-- viewport-fit=cover garante que o jogo ocupe até a área da câmera do celular -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Emulador SNES</title>
   <style>
@@ -15,23 +14,24 @@
     body, html {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       background-color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
       font-family: sans-serif;
-      position: fixed; /* Evita rolagem no celular */
+      position: fixed;
     }
     #game-container {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       display: none;
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
+      z-index: 999;
     }
     #start-screen {
       color: #fff;
@@ -59,13 +59,13 @@
 
   <!-- Tela Inicial -->
   <div id="start-screen">
-    <h2>🎮 Clique para Iniciar em Tela Cheia</h2>
+    <h2>🎮 Clique para Iniciar o Jogo</h2>
     <button class="btn-start">INICIAR JOGO</button>
   </div>
 
-  <!-- Emulador -->
+  <!-- Emulador em Tela Cheia Fixa -->
   <div id="game-container">
-    <div id="game"></div>
+    <div id="game" style="width:100%; height:100%;"></div>
   </div>
 
   <script>
@@ -76,20 +76,24 @@
       const startScreen = document.getElementById('start-screen');
       const gameContainer = document.getElementById('game-container');
 
-      // Função para forçar tela cheia em celulares (Android e iOS)
-      function enableMobileFullscreen() {
+      async function forceFullscreenAndLandscape() {
         const docEl = document.documentElement;
+
+        // 1. Tenta ativar tela cheia
         if (docEl.requestFullscreen) {
-          docEl.requestFullscreen();
-        } else if (docEl.webkitRequestFullscreen) { /* Chrome Android / Safari iOS */
+          try { await docEl.requestFullscreen(); } catch (e) {}
+        } else if (docEl.webkitRequestFullscreen) {
           docEl.webkitRequestFullscreen();
-        } else if (docEl.msRequestFullscreen) {
-          docEl.msRequestFullscreen();
+        }
+
+        // 2. Tenta forçar a orientação horizontal no Android/Chrome
+        if (screen.orientation && screen.orientation.lock) {
+          try { await screen.orientation.lock('landscape'); } catch (e) {}
         }
       }
 
-      startScreen.addEventListener('click', () => {
-        enableMobileFullscreen();
+      startScreen.addEventListener('click', async () => {
+        await forceFullscreenAndLandscape();
         
         startScreen.style.display = 'none';
         gameContainer.style.display = 'block';
