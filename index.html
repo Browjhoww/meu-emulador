@@ -101,7 +101,7 @@
         // Configuração do Emulador
         EJS_player = '#game';
         EJS_core = 'snes';
-        EJS_gameUrl = `roms/${gameId}.smc`;
+        EJS_gameUrl = gameId.includes('.') ? `roms/${gameId}` : `roms/${gameId}.smc`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
         const script = document.createElement('script');
