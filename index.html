@@ -8,43 +8,97 @@
     body, html {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       background-color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
       overflow: hidden;
+      font-family: sans-serif;
     }
     #game-container {
       width: 100%;
       height: 100%;
+      display: none; /* Fica escondido até o clique */
+    }
+    #start-screen {
+      color: #fff;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn-start {
+      background-color: #e50914;
+      color: white;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+      transition: transform 0.2s;
+    }
+    .btn-start:hover {
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
 
+  <!-- Tela inicial para permitir o Fullscreen -->
+  <div id="start-screen">
+    <h2>🎮 Clique abaixo para iniciar em Tela Cheia</h2>
+    <button class="btn-start">INICIAR JOGO</button>
+  </div>
+
+  <!-- Container do Emulador -->
   <div id="game-container">
     <div id="game"></div>
   </div>
 
   <script>
-    // Lê o nome do jogo na URL (ex: ?game=mario)
     const urlParams = new URLSearchParams(window.location.search);
     const gameId = urlParams.get('game');
 
     if (gameId) {
-      EJS_player = '#game';
-      EJS_core = 'snes'; // Core de Super Nintendo
-      EJS_gameUrl = `roms/${gameId}.smc`; // Busca a ROM dentro da pasta "roms"
-      EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+      const startScreen = document.getElementById('start-screen');
+      const gameContainer = document.getElementById('game-container');
 
-      const script = document.createElement('script');
-      script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-      document.body.appendChild(script);
+      // Função para ativar Tela Cheia no navegador
+      function requestFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+          elem.msRequestFullscreen();
+        }
+      }
+
+      // Ao clicar na tela inicial
+      startScreen.addEventListener('click', () => {
+        requestFullscreen(); // Entra em tela cheia
+        startScreen.style.display = 'none'; // Esconde o botão
+        gameContainer.style.display = 'block'; // Mostra o jogo
+
+        // Carrega o emulador
+        EJS_player = '#game';
+        EJS_core = 'snes';
+        EJS_gameUrl = `roms/${gameId}.smc`;
+        EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+
+        const script = document.createElement('script');
+        script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+        document.body.appendChild(script);
+      });
+
     } else {
-      document.getElementById('game-container').innerHTML = 
-        '<h2 style="color: white; text-align: center; margin-top: 20%; font-family: sans-serif;">Nenhum jogo especificado no link.</h2>';
+      document.getElementById('start-screen').innerHTML = 
+        '<h2 style="color: white;">Nenhum jogo especificado na URL.</h2>';
     }
   </script>
 
