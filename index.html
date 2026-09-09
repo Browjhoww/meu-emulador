@@ -133,33 +133,25 @@
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
-        // Força a remoção dos avisos por cima do botão e clica automaticamente
+        // Mover o botão para o topo/centro superior
         EJS_onReady = () => {
-          // Injeta um estilo dinâmico diretamente na página para esconder notificações e centralizar o botão
-          const style = document.createElement('style');
-          style.innerHTML = `
-            .ejs_start_button, #game button {
-              position: fixed !important;
-              top: 50% !important;
-              left: 50% !important;
-              transform: translate(-50%, -50%) !important;
-              z-index: 2147483647 !important;
-              margin: 0 !important;
-            }
-            /* Esconde avisos/notificações que ficam cobrindo o botão */
-            .ejs_notification, [class*="notification"] {
-              display: none !important;
-            }
-          `;
-          document.head.appendChild(style);
-
-          const autoClicker = setInterval(() => {
-            const startBtn = document.querySelector('#game button') || document.querySelector('.ejs_start_button');
-            if (startBtn) {
-              startBtn.click();
-              clearInterval(autoClicker);
-            }
+          const checkAndReposition = setInterval(() => {
+            const buttons = document.querySelectorAll('#game button, #game div');
+            
+            buttons.forEach(el => {
+              if (el.tagName === 'BUTTON' || (el.innerText && (el.innerText.includes('Jogar') || el.innerText.includes('Start')))) {
+                el.style.setProperty('position', 'fixed', 'important');
+                el.style.setProperty('top', '30%', 'important'); // MOVE O BOTÃO PARA A PARTE SUPERIOR (30%)
+                el.style.setProperty('left', '50%', 'important');
+                el.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+                el.style.setProperty('z-index', '9999999', 'important');
+                
+                el.click();
+              }
+            });
           }, 100);
+
+          setTimeout(() => clearInterval(checkAndReposition), 8000);
         };
 
         const script = document.createElement('script');
