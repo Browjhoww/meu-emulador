@@ -101,7 +101,7 @@
         coverImg.style.display = 'none';
       };
 
-      // 2. Limpa a URL
+      // 2. Limpa a URL da barra do navegador
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const startScreen = document.getElementById('start-screen');
@@ -133,25 +133,30 @@
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
-        // Mover o botão para o topo/centro superior
+        // Centralização absoluta forçada em ambas as orientações
         EJS_onReady = () => {
-          const checkAndReposition = setInterval(() => {
-            const buttons = document.querySelectorAll('#game button, #game div');
+          const forceCenter = setInterval(() => {
+            // Seleciona o botão azul e a caixa do menu inicial do emulador
+            const elements = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
-            buttons.forEach(el => {
-              if (el.tagName === 'BUTTON' || (el.innerText && (el.innerText.includes('Jogar') || el.innerText.includes('Start')))) {
+            elements.forEach(el => {
+              if (el) {
+                // Remove restrições de pai e aplica alinhamento fixo ao centro da viewport
                 el.style.setProperty('position', 'fixed', 'important');
-                el.style.setProperty('top', '30%', 'important'); // MOVE O BOTÃO PARA A PARTE SUPERIOR (30%)
+                el.style.setProperty('top', '50%', 'important');
                 el.style.setProperty('left', '50%', 'important');
                 el.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
-                el.style.setProperty('z-index', '9999999', 'important');
-                
-                el.click();
+                el.style.setProperty('z-index', '2147483647', 'important');
+                el.style.setProperty('margin', '0', 'important');
+
+                if (typeof el.click === 'function') {
+                  el.click();
+                }
               }
             });
-          }, 100);
+          }, 50);
 
-          setTimeout(() => clearInterval(checkAndReposition), 8000);
+          setTimeout(() => clearInterval(forceCenter), 10000);
         };
 
         const script = document.createElement('script');
