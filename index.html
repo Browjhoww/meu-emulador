@@ -133,21 +133,21 @@
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
-        // Centralização absoluta forçada em ambas as orientações
         EJS_onReady = () => {
-          const forceCenter = setInterval(() => {
-            // Seleciona o botão azul e a caixa do menu inicial do emulador
-            const elements = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
+          const forceReposition = setInterval(() => {
+            // Seleciona o botão azul e a caixa de diálogo interna do emulador
+            const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
-            elements.forEach(el => {
+            targets.forEach(el => {
               if (el) {
-                // Remove restrições de pai e aplica alinhamento fixo ao centro da viewport
-                el.style.setProperty('position', 'fixed', 'important');
-                el.style.setProperty('top', '50%', 'important');
+                // Trava o botão em 35% do topo da tela, centralizado horizontalmente
+                el.style.setProperty('position', 'absolute', 'important');
+                el.style.setProperty('top', '35%', 'important');
+                el.style.setProperty('bottom', 'auto', 'important');
                 el.style.setProperty('left', '50%', 'important');
-                el.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
+                el.style.setProperty('transform', 'translateX(-50%)', 'important');
                 el.style.setProperty('z-index', '2147483647', 'important');
-                el.style.setProperty('margin', '0', 'important');
+                el.style.setProperty('margin', '0 auto', 'important');
 
                 if (typeof el.click === 'function') {
                   el.click();
@@ -156,7 +156,7 @@
             });
           }, 50);
 
-          setTimeout(() => clearInterval(forceCenter), 10000);
+          setTimeout(() => clearInterval(forceReposition), 10000);
         };
 
         const script = document.createElement('script');
