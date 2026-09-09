@@ -107,7 +107,8 @@
       const startScreen = document.getElementById('start-screen');
       const gameContainer = document.getElementById('game-container');
 
-      async function forceFullscreenAndLandscape() {
+      // Função de orientação condicional por console
+      async function handleOrientation(consoleType) {
         const docEl = document.documentElement;
         if (docEl.requestFullscreen) {
           try { await docEl.requestFullscreen(); } catch (e) {}
@@ -116,12 +117,20 @@
         }
 
         if (screen.orientation && screen.orientation.lock) {
-          try { await screen.orientation.lock('landscape'); } catch (e) {}
+          try {
+            // Se for GBA ou GBC, força/mantém em modo Retrato (portrait)
+            if (consoleType === 'gba' || consoleType === 'gbc') {
+              await screen.orientation.lock('portrait');
+            } else {
+              // Todos os outros consoles travam em modo Paisagem (landscape)
+              await screen.orientation.lock('landscape');
+            }
+          } catch (e) {}
         }
       }
 
       startScreen.addEventListener('click', async () => {
-        await forceFullscreenAndLandscape();
+        await handleOrientation(consoleType);
         
         startScreen.style.display = 'none';
         gameContainer.style.display = 'block';
@@ -135,12 +144,10 @@
 
         EJS_onReady = () => {
           const forceReposition = setInterval(() => {
-            // Seleciona o botão azul e a caixa de diálogo interna do emulador
             const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
             targets.forEach(el => {
               if (el) {
-                // Trava o botão em 35% do topo da tela, centralizado horizontalmente
                 el.style.setProperty('position', 'absolute', 'important');
                 el.style.setProperty('top', '35%', 'important');
                 el.style.setProperty('bottom', 'auto', 'important');
