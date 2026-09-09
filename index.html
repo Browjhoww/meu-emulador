@@ -65,6 +65,19 @@
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
+
+    /* Regra CSS Global para travar o botão do EmulatorJS no centro exato da tela */
+    .ejs_start_button, 
+    #game div[class*="start"], 
+    #game div[class*="dialog"],
+    #game div[class*="overlay"] {
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 2147483647 !important;
+      margin: 0 !important;
+    }
   </style>
 </head>
 <body>
@@ -108,8 +121,6 @@
       const gameContainer = document.getElementById('game-container');
 
       async function handleOrientation(consoleType) {
-        // Desativado a chamada de fullscreen automatico para o modo retrato
-        // assim o layout CSS do navegador nao e sobrescrito pela API do celular
         if (consoleType !== 'gba' && consoleType !== 'gbc') {
           const docEl = document.documentElement;
           if (docEl.requestFullscreen) {
@@ -145,26 +156,24 @@
 
         EJS_onReady = () => {
           const forceReposition = setInterval(() => {
-            // Reposiciona botão inicial
-            const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
+            // Busca os elementos e força a aplicação no nível do atributo style
+            const targets = document.querySelectorAll('*');
             
             targets.forEach(el => {
-              if (el) {
-                el.style.setProperty('position', 'absolute', 'important');
-                el.style.setProperty('top', '35%', 'important');
-                el.style.setProperty('bottom', 'auto', 'important');
+              if (el.className && typeof el.className === 'string' && (el.className.includes('start') || el.className.includes('ejs'))) {
+                el.style.setProperty('position', 'fixed', 'important');
+                el.style.setProperty('top', '50%', 'important');
                 el.style.setProperty('left', '50%', 'important');
-                el.style.setProperty('transform', 'translateX(-50%)', 'important');
+                el.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
                 el.style.setProperty('z-index', '2147483647', 'important');
-                el.style.setProperty('margin', '0 auto', 'important');
-
-                if (typeof el.click === 'function') {
+                
+                if (typeof el.click === 'function' && el.tagName === 'BUTTON') {
                   el.click();
                 }
               }
             });
 
-            // Injeta o deslocamento da tela do jogo no modo retrato
+            // Reajusta a posição da tela do jogo no modo retrato
             if (consoleType === 'gba' || consoleType === 'gbc') {
               const elements = document.querySelectorAll('#game, #game > div, #game canvas, #game iframe');
               elements.forEach(el => {
