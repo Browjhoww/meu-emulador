@@ -65,16 +65,6 @@
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
-
-    /* REGRAS PARA REPOSICIONAR O BOTÃO AZUL DO EMULADOR */
-    #game button, .ejs_start_button {
-      position: absolute !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      z-index: 999999 !important; /* Garante que fique por cima da notificação */
-      margin: 0 !important;
-    }
   </style>
 </head>
 <body>
@@ -143,8 +133,26 @@
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
-        // Auto-clique no botão interno
+        // Força a remoção dos avisos por cima do botão e clica automaticamente
         EJS_onReady = () => {
+          // Injeta um estilo dinâmico diretamente na página para esconder notificações e centralizar o botão
+          const style = document.createElement('style');
+          style.innerHTML = `
+            .ejs_start_button, #game button {
+              position: fixed !important;
+              top: 50% !important;
+              left: 50% !important;
+              transform: translate(-50%, -50%) !important;
+              z-index: 2147483647 !important;
+              margin: 0 !important;
+            }
+            /* Esconde avisos/notificações que ficam cobrindo o botão */
+            .ejs_notification, [class*="notification"] {
+              display: none !important;
+            }
+          `;
+          document.head.appendChild(style);
+
           const autoClicker = setInterval(() => {
             const startBtn = document.querySelector('#game button') || document.querySelector('.ejs_start_button');
             if (startBtn) {
