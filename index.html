@@ -65,19 +65,6 @@
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
-
-    /* Regra CSS Global para travar o botão do EmulatorJS no centro exato da tela */
-    .ejs_start_button, 
-    #game div[class*="start"], 
-    #game div[class*="dialog"],
-    #game div[class*="overlay"] {
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      z-index: 2147483647 !important;
-      margin: 0 !important;
-    }
   </style>
 </head>
 <body>
@@ -153,27 +140,13 @@
         EJS_core = consoleType;
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+        
+        // DESATIVA A TELA INICIAL INTERNA DO EMULATORJS (Elimina o botão azul)
+        EJS_startOnLoaded = true;
 
         EJS_onReady = () => {
-          const forceReposition = setInterval(() => {
-            // Busca os elementos e força a aplicação no nível do atributo style
-            const targets = document.querySelectorAll('*');
-            
-            targets.forEach(el => {
-              if (el.className && typeof el.className === 'string' && (el.className.includes('start') || el.className.includes('ejs'))) {
-                el.style.setProperty('position', 'fixed', 'important');
-                el.style.setProperty('top', '50%', 'important');
-                el.style.setProperty('left', '50%', 'important');
-                el.style.setProperty('transform', 'translate(-50%, -50%)', 'important');
-                el.style.setProperty('z-index', '2147483647', 'important');
-                
-                if (typeof el.click === 'function' && el.tagName === 'BUTTON') {
-                  el.click();
-                }
-              }
-            });
-
-            // Reajusta a posição da tela do jogo no modo retrato
+          // Mantém o ajuste de deslocamento da tela do jogo no modo retrato
+          const forcePortraitLayout = setInterval(() => {
             if (consoleType === 'gba' || consoleType === 'gbc') {
               const elements = document.querySelectorAll('#game, #game > div, #game canvas, #game iframe');
               elements.forEach(el => {
@@ -184,10 +157,9 @@
                 }
               });
             }
-
           }, 50);
 
-          setTimeout(() => clearInterval(forceReposition), 10000);
+          setTimeout(() => clearInterval(forcePortraitLayout), 10000);
         };
 
         const script = document.createElement('script');
