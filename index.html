@@ -101,13 +101,12 @@
         coverImg.style.display = 'none';
       };
 
-      // 2. Limpa a URL da barra do navegador
+      // 2. Limpa a URL
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const startScreen = document.getElementById('start-screen');
       const gameContainer = document.getElementById('game-container');
 
-      // Função de orientação condicional por console
       async function handleOrientation(consoleType) {
         const docEl = document.documentElement;
         if (docEl.requestFullscreen) {
@@ -118,11 +117,9 @@
 
         if (screen.orientation && screen.orientation.lock) {
           try {
-            // Se for GBA ou GBC, força/mantém em modo Retrato (portrait)
             if (consoleType === 'gba' || consoleType === 'gbc') {
               await screen.orientation.lock('portrait');
             } else {
-              // Todos os outros consoles travam em modo Paisagem (landscape)
               await screen.orientation.lock('landscape');
             }
           } catch (e) {}
@@ -143,6 +140,7 @@
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
         EJS_onReady = () => {
+          // Reposiciona o botão azul de início
           const forceReposition = setInterval(() => {
             const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
@@ -161,6 +159,15 @@
                 }
               }
             });
+
+            // Reajusta o canvas da tela do jogo no modo Retrato para descer a tela
+            if (consoleType === 'gba' || consoleType === 'gbc') {
+              const gameCanvas = document.querySelector('#game canvas, #game iframe');
+              if (gameCanvas) {
+                gameCanvas.style.setProperty('margin-top', '80px', 'important');
+              }
+            }
+
           }, 50);
 
           setTimeout(() => clearInterval(forceReposition), 10000);
