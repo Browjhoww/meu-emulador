@@ -11,18 +11,17 @@
       -webkit-user-select: none;
       user-select: none;
     }
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       background-color: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
       overflow: hidden;
       font-family: sans-serif;
       position: fixed;
+      top: 0;
+      left: 0;
     }
     #game-container {
       width: 100vw;
@@ -33,6 +32,13 @@
       left: 0;
       z-index: 999;
     }
+    #game {
+      width: 100vw !important;
+      height: 100vh !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
     #start-screen {
       color: #fff;
       text-align: center;
@@ -40,8 +46,10 @@
       z-index: 10;
       padding: 20px;
       width: 100%;
+      height: 100%;
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
     }
     .start-banner {
@@ -76,7 +84,7 @@
   </div>
 
   <div id="game-container">
-    <div id="game" style="width:100%; height:100%;"></div>
+    <div id="game"></div>
   </div>
 
   <script>
@@ -93,7 +101,6 @@
     };
 
     if (gameId) {
-      // 1. Capa dinâmica
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
 
@@ -101,7 +108,6 @@
         coverImg.style.display = 'none';
       };
 
-      // 2. Limpa a URL
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const startScreen = document.getElementById('start-screen');
@@ -141,25 +147,33 @@
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
         
-        // DESATIVA A TELA INICIAL INTERNA DO EMULATORJS (Elimina o botão azul)
+        // Ativa inicialização rápida
         EJS_startOnLoaded = true;
 
         EJS_onReady = () => {
-          // Mantém o ajuste de deslocamento da tela do jogo no modo retrato
-          const forcePortraitLayout = setInterval(() => {
-            if (consoleType === 'gba' || consoleType === 'gbc') {
-              const elements = document.querySelectorAll('#game, #game > div, #game canvas, #game iframe');
-              elements.forEach(el => {
-                if (el.tagName.toLowerCase() === 'canvas' || el.tagName.toLowerCase() === 'iframe') {
-                  el.style.setProperty('margin-top', '150px', 'important');
-                  el.style.setProperty('position', 'relative', 'important');
-                  el.style.setProperty('top', '0', 'important');
+          const interval = setInterval(() => {
+            // Penelope no Shadow DOM para clicar no botão azul automaticamente se ele existir
+            const shadowHosts = document.querySelectorAll('*');
+            shadowHosts.forEach(host => {
+              if (host.shadowRoot) {
+                const innerBtn = host.shadowRoot.querySelector('button, .ejs_start_button, div[class*="start"]');
+                if (innerBtn && typeof innerBtn.click === 'function') {
+                  innerBtn.click();
                 }
-              });
-            }
-          }, 50);
+              }
+            });
 
-          setTimeout(() => clearInterval(forcePortraitLayout), 10000);
+            // Reposiciona o canvas apenas no modo retrato
+            if (consoleType === 'gba' || consoleType === 'gbc') {
+              const canvas = document.querySelector('#game canvas');
+              if (canvas) {
+                canvas.style.setProperty('margin-top', '150px', 'important');
+                canvas.style.setProperty('position', 'relative', 'important');
+              }
+            }
+          }, 100);
+
+          setTimeout(() => clearInterval(interval), 8000);
         };
 
         const script = document.createElement('script');
