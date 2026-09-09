@@ -14,43 +14,26 @@
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       background-color: #000;
       overflow: hidden;
       font-family: sans-serif;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-    #game-container {
-      width: 100vw;
-      height: 100vh;
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 999;
-    }
-    #game {
-      width: 100vw !important;
-      height: 100vh !important;
-      position: absolute !important;
-      top: 0 !important;
-      left: 0 !important;
     }
     #start-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
       color: #fff;
-      text-align: center;
-      cursor: pointer;
-      z-index: 10;
-      padding: 20px;
-      width: 100%;
-      height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      z-index: 9999;
+      cursor: pointer;
     }
     .start-banner {
       max-width: 280px;
@@ -69,22 +52,29 @@
       font-size: 1.2rem;
       border: none;
       border-radius: 8px;
-      cursor: pointer;
       font-weight: bold;
+      cursor: pointer;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    }
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
     }
   </style>
 </head>
 <body>
 
-  <!-- Tela Inicial -->
+  <!-- Sua Tela Inicial Customizada -->
   <div id="start-screen">
     <img id="game-cover" src="" alt="Capa do Jogo" class="start-banner">
-    <button class="btn-start">INICIAR JOGO</button>
+    <button class="btn-start" id="btn-play">INICIAR JOGO</button>
   </div>
 
   <div id="game-container">
-    <div id="game"></div>
+    <div id="game" style="width:100%; height:100%;"></div>
   </div>
 
   <script>
@@ -101,28 +91,31 @@
     };
 
     if (gameId) {
+      // 1. Define a capa e trata o fallback caso não exista imagem
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
+      coverImg.onerror = () => { coverImg.style.display = 'none'; };
 
-      coverImg.onerror = () => {
-        coverImg.style.display = 'none';
-      };
-
+      // 2. Limpa a URL para deixar o endereço amigável
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
-      const startScreen = document.getElementById('start-screen');
-      const gameContainer = document.getElementById('game-container');
+      const ext = extensions[consoleType] || 'smc';
 
-      async function handleOrientation(consoleType) {
-        if (consoleType !== 'gba' && consoleType !== 'gbc') {
-          const docEl = document.documentElement;
-          if (docEl.requestFullscreen) {
-            try { await docEl.requestFullscreen(); } catch (e) {}
-          } else if (docEl.webkitRequestFullscreen) {
-            docEl.webkitRequestFullscreen();
-          }
-        }
+      // Configurações do EmulatorJS
+      EJS_player = '#game';
+      EJS_core = consoleType;
+      EJS_gameUrl = `roms/${gameId}.${ext}`;
+      EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+      EJS_startOnLoaded = true; // Ignora a tela interna azul do emulador
 
+      // Injeta o script em segundo plano
+      const script = document.createElement('script');
+      script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+      document.body.appendChild(script);
+
+      // Ação ao clicar na sua tela/botão vermelho
+      document.getElementById('start-screen').addEventListener('click', async () => {
+        // Bloqueio de orientação do dispositivo
         if (screen.orientation && screen.orientation.lock) {
           try {
             if (consoleType === 'gba' || consoleType === 'gbc') {
@@ -130,60 +123,28 @@
             } else {
               await screen.orientation.lock('landscape');
             }
-          } catch (e) {}
+          } catch(e) {}
         }
-      }
 
-      startScreen.addEventListener('click', async () => {
-        await handleOrientation(consoleType);
-        
-        startScreen.style.display = 'none';
-        gameContainer.style.display = 'block';
+        // Esconde a sua tela e exibe o jogo
+        document.getElementById('start-screen').style.display = 'none';
 
-        const ext = extensions[consoleType] || 'smc';
-
-        EJS_player = '#game';
-        EJS_core = consoleType;
-        EJS_gameUrl = `roms/${gameId}.${ext}`;
-        EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-        
-        // Ativa inicialização rápida
-        EJS_startOnLoaded = true;
-
-        EJS_onReady = () => {
-          const interval = setInterval(() => {
-            // Penelope no Shadow DOM para clicar no botão azul automaticamente se ele existir
-            const shadowHosts = document.querySelectorAll('*');
-            shadowHosts.forEach(host => {
-              if (host.shadowRoot) {
-                const innerBtn = host.shadowRoot.querySelector('button, .ejs_start_button, div[class*="start"]');
-                if (innerBtn && typeof innerBtn.click === 'function') {
-                  innerBtn.click();
-                }
-              }
-            });
-
-            // Reposiciona o canvas apenas no modo retrato
-            if (consoleType === 'gba' || consoleType === 'gbc') {
-              const canvas = document.querySelector('#game canvas');
-              if (canvas) {
-                canvas.style.setProperty('margin-top', '150px', 'important');
-                canvas.style.setProperty('position', 'relative', 'important');
-              }
+        // Mantém o ajuste de margem para afastar a tela da câmera no modo retrato
+        if (consoleType === 'gba' || consoleType === 'gbc') {
+          const checkCanvas = setInterval(() => {
+            const canvas = document.querySelector('#game canvas');
+            if (canvas) {
+              canvas.style.setProperty('margin-top', '150px', 'important');
+              canvas.style.setProperty('position', 'relative', 'important');
+              clearInterval(checkCanvas);
             }
-          }, 100);
-
-          setTimeout(() => clearInterval(interval), 8000);
-        };
-
-        const script = document.createElement('script');
-        script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-        document.body.appendChild(script);
+          }, 50);
+        }
       });
 
     } else {
       document.getElementById('start-screen').innerHTML = 
-        '<h2 style="color: white;">Nenhum jogo especificado na URL.</h2>';
+        '<h2 style="color:white;">Nenhum jogo especificado na URL.</h2>';
     }
   </script>
 
