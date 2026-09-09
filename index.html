@@ -65,6 +65,22 @@
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
+
+    /* Regras de CSS forçadas para centralizar a tela do jogo no modo retrato */
+    body.portrait-mode #game {
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding-bottom: 80px !important; /* Move a área visual da tela para baixo, aproximando dos controles */
+    }
+
+    body.portrait-mode #game canvas {
+      position: relative !important;
+      top: 0 !important;
+      left: 0 !important;
+      transform: none !important;
+    }
   </style>
 </head>
 <body>
@@ -93,6 +109,11 @@
     };
 
     if (gameId) {
+      // Adiciona classe no body se for modo retrato (GBA/GBC)
+      if (consoleType === 'gba' || consoleType === 'gbc') {
+        document.body.classList.add('portrait-mode');
+      }
+
       // 1. Capa dinâmica
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
@@ -140,8 +161,8 @@
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
 
         EJS_onReady = () => {
-          // Reposiciona o botão azul de início
           const forceReposition = setInterval(() => {
+            // Reposiciona o botão azul
             const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
             targets.forEach(el => {
@@ -160,11 +181,18 @@
               }
             });
 
-            // Reajusta o canvas da tela do jogo no modo Retrato para descer a tela
+            // Força o reajuste de layout das divs internas no modo retrato
             if (consoleType === 'gba' || consoleType === 'gbc') {
-              const gameCanvas = document.querySelector('#game canvas, #game iframe');
-              if (gameCanvas) {
-                gameCanvas.style.setProperty('margin-top', '80px', 'important');
+              const gameDiv = document.querySelector('#game');
+              if (gameDiv) {
+                const subDivs = gameDiv.querySelectorAll('div');
+                subDivs.forEach(div => {
+                  if (div.style.position === 'absolute' && !div.querySelector('button')) {
+                    div.style.setProperty('position', 'relative', 'important');
+                    div.style.setProperty('top', '0', 'important');
+                    div.style.setProperty('margin-top', '15vh', 'important');
+                  }
+                });
               }
             }
 
