@@ -32,15 +32,7 @@
       top: 0;
       left: 0;
       z-index: 999;
-      transition: transform 0.2s ease;
     }
-
-    /* Puxa todo o emulador para baixo no modo retrato, saindo da área da câmera */
-    body.portrait-mode #game-container {
-      transform: translateY(12vh) !important;
-      height: 88vh !important;
-    }
-
     #start-screen {
       color: #fff;
       text-align: center;
@@ -101,10 +93,6 @@
     };
 
     if (gameId) {
-      if (consoleType === 'gba' || consoleType === 'gbc') {
-        document.body.classList.add('portrait-mode');
-      }
-
       // 1. Capa dinâmica
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
@@ -120,11 +108,15 @@
       const gameContainer = document.getElementById('game-container');
 
       async function handleOrientation(consoleType) {
-        const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          try { await docEl.requestFullscreen(); } catch (e) {}
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
+        // Desativado a chamada de fullscreen automatico para o modo retrato
+        // assim o layout CSS do navegador nao e sobrescrito pela API do celular
+        if (consoleType !== 'gba' && consoleType !== 'gbc') {
+          const docEl = document.documentElement;
+          if (docEl.requestFullscreen) {
+            try { await docEl.requestFullscreen(); } catch (e) {}
+          } else if (docEl.webkitRequestFullscreen) {
+            docEl.webkitRequestFullscreen();
+          }
         }
 
         if (screen.orientation && screen.orientation.lock) {
@@ -153,6 +145,7 @@
 
         EJS_onReady = () => {
           const forceReposition = setInterval(() => {
+            // Reposiciona botão inicial
             const targets = document.querySelectorAll('.ejs_start_button, #game button, div[class*="start"], div[class*="dialog"]');
             
             targets.forEach(el => {
@@ -170,6 +163,19 @@
                 }
               }
             });
+
+            // Injeta o deslocamento da tela do jogo no modo retrato
+            if (consoleType === 'gba' || consoleType === 'gbc') {
+              const elements = document.querySelectorAll('#game, #game > div, #game canvas, #game iframe');
+              elements.forEach(el => {
+                if (el.tagName.toLowerCase() === 'canvas' || el.tagName.toLowerCase() === 'iframe') {
+                  el.style.setProperty('margin-top', '150px', 'important');
+                  el.style.setProperty('position', 'relative', 'important');
+                  el.style.setProperty('top', '0', 'important');
+                }
+              });
+            }
+
           }, 50);
 
           setTimeout(() => clearInterval(forceReposition), 10000);
