@@ -40,6 +40,19 @@
       z-index: 10;
       padding: 20px;
       width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .start-banner {
+      max-width: 280px;
+      max-height: 200px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
     }
     .btn-start {
       background-color: #e50914;
@@ -49,7 +62,6 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 15px;
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
@@ -59,11 +71,11 @@
 
   <!-- Tela Inicial -->
   <div id="start-screen">
-    <h2>🎮 Clique para Iniciar o Jogo</h2>
+    <!-- A imagem será carregada via JavaScript dinamicamente -->
+    <img id="game-cover" src="" alt="Capa do Jogo" class="start-banner">
     <button class="btn-start">INICIAR JOGO</button>
   </div>
 
-  <!-- Emulador em Tela Cheia Fixa -->
   <div id="game-container">
     <div id="game" style="width:100%; height:100%;"></div>
   </div>
@@ -82,8 +94,16 @@
     };
 
     if (gameId) {
-      // --- MÁSCARA DE URL ---
-      // Apaga o ?game=... e ?console=... da barra do navegador assim que lê o jogo
+      // 1. Define a capa automaticamente com o nome da ROM (ex: roms/mario.png, roms/sonic.png)
+      const coverImg = document.getElementById('game-cover');
+      coverImg.src = `roms/${gameId}.png`;
+
+      // Caso a imagem falhe ao carregar (não exista), oculta a tag para não quebrar a tela
+      coverImg.onerror = () => {
+        coverImg.style.display = 'none';
+      };
+
+      // 2. Mascara a URL removendo os parâmetros
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const startScreen = document.getElementById('start-screen');
@@ -110,11 +130,21 @@
 
         const ext = extensions[consoleType] || 'smc';
 
-        // Configuração do Emulador
         EJS_player = '#game';
         EJS_core = consoleType;
         EJS_gameUrl = `roms/${gameId}.${ext}`;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+
+        // Auto-clique no botão interno
+        EJS_onReady = () => {
+          const autoClicker = setInterval(() => {
+            const startBtn = document.querySelector('#game button') || document.querySelector('.ejs_start_button');
+            if (startBtn) {
+              startBtn.click();
+              clearInterval(autoClicker);
+            }
+          }, 100);
+        };
 
         const script = document.createElement('script');
         script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
