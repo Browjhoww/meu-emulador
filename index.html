@@ -65,13 +65,22 @@
       font-weight: bold;
       box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
+
+    /* REGRAS PARA REPOSICIONAR O BOTÃO AZUL DO EMULADOR */
+    #game button, .ejs_start_button {
+      position: absolute !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      z-index: 999999 !important; /* Garante que fique por cima da notificação */
+      margin: 0 !important;
+    }
   </style>
 </head>
 <body>
 
   <!-- Tela Inicial -->
   <div id="start-screen">
-    <!-- A imagem será carregada via JavaScript dinamicamente -->
     <img id="game-cover" src="" alt="Capa do Jogo" class="start-banner">
     <button class="btn-start">INICIAR JOGO</button>
   </div>
@@ -94,16 +103,15 @@
     };
 
     if (gameId) {
-      // 1. Define a capa automaticamente com o nome da ROM (ex: roms/mario.png, roms/sonic.png)
+      // 1. Capa dinâmica
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
 
-      // Caso a imagem falhe ao carregar (não exista), oculta a tag para não quebrar a tela
       coverImg.onerror = () => {
         coverImg.style.display = 'none';
       };
 
-      // 2. Mascara a URL removendo os parâmetros
+      // 2. Limpa a URL
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const startScreen = document.getElementById('start-screen');
