@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <!-- Adicionadas permissões explicitas para tela cheia e orientação -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Emulador Web</title>
   <style>
     * {
@@ -91,12 +94,10 @@
     };
 
     if (gameId) {
-      // 1. Define a capa e trata o fallback caso não exista imagem
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameId}.png`;
       coverImg.onerror = () => { coverImg.style.display = 'none'; };
 
-      // 2. Limpa a URL para deixar o endereço amigável
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
       const ext = extensions[consoleType] || 'smc';
@@ -106,15 +107,25 @@
       EJS_core = consoleType;
       EJS_gameUrl = `roms/${gameId}.${ext}`;
       EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-      EJS_startOnLoaded = true; // Ignora a tela interna azul do emulador
+      
+      // Habilita o botão e suporte a Fullscreen nativo no menu
+      EJS_allowFullscreen = true; 
 
-      // Injeta o script em segundo plano
+      // Injeta o script do emulador
       const script = document.createElement('script');
       script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
       document.body.appendChild(script);
 
       // Ação ao clicar na sua tela/botão vermelho
       document.getElementById('start-screen').addEventListener('click', async () => {
+        // Tenta colocar o próprio navegador em Tela Cheia no clique do usuário
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+          elem.webkitRequestFullscreen().catch(() => {});
+        }
+
         // Bloqueio de orientação do dispositivo
         if (screen.orientation && screen.orientation.lock) {
           try {
@@ -126,10 +137,10 @@
           } catch(e) {}
         }
 
-        // Esconde a sua tela e exibe o jogo
+        // Esconde a tela customizada
         document.getElementById('start-screen').style.display = 'none';
 
-        // Mantém o ajuste de margem para afastar a tela da câmera no modo retrato
+        // Ajuste para jogos portáteis no modo retrato
         if (consoleType === 'gba' || consoleType === 'gbc') {
           const checkCanvas = setInterval(() => {
             const canvas = document.querySelector('#game canvas');
