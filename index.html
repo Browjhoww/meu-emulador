@@ -86,72 +86,46 @@
 
     if (rawGameParam) {
       let gameName = rawGameParam;
-      let explicitExt = null;
+      let extension = 'smc'; // Extensão padrão para a maioria das suas ROMs do SNES
 
-      // Se o usuário digitou a extensão na URL (ex: Aladdin.sfc)
+      // Se passou extensão direta na URL (ex: DonkeyKongCountry.smc ou DonkeyKongCountry.sfc)
       if (rawGameParam.includes('.')) {
         const parts = rawGameParam.split('.');
-        explicitExt = parts.pop();
+        extension = parts.pop();
         gameName = parts.join('.');
+      } else {
+        const defaultExtensions = {
+          'snes': 'smc',
+          'segaMD': 'md',
+          'gba': 'gba',
+          'gbc': 'gbc',
+          'n64': 'z64'
+        };
+        extension = defaultExtensions[consoleType] || 'smc';
       }
 
-      // Capa do jogo (ex: roms/Aladdin.png)
+      // Exibe a capa
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameName}.png`;
       coverImg.onerror = () => { coverImg.style.display = 'none'; };
 
-      // Limpa a URL no navegador
+      // Limpa o endereço da barra do navegador
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
-      // Função para validar se o arquivo existe na pasta antes de passar para o emulador
-      async function resolveRomUrl(name, console, explicit) {
-        if (explicit) return `roms/${name}.${explicit}`;
+      // Configurações diretas do EmulatorJS sem chamadas de rede extras
+      window.EJS_player = '#game';
+      window.EJS_core = consoleType;
+      window.EJS_gameName = gameName;
+      window.EJS_gameUrl = `roms/${gameName}.${extension}`;
+      window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+      window.EJS_allowFullscreen = true;
 
-        const extensionsMap = {
-          'snes': ['smc', 'sfc'],
-          'segaMD': ['md'],
-          'gba': ['gba'],
-          'gbc': ['gbc'],
-          'n64': ['z64']
-        };
+      // Injeta o script
+      const script = document.createElement('script');
+      script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+      document.body.appendChild(script);
 
-        const candidates = extensionsMap[console] || ['smc', 'sfc'];
-
-        for (const ext of candidates) {
-          const testUrl = `roms/${name}.${ext}`;
-          try {
-            const res = await fetch(testUrl, { method: 'HEAD' });
-            if (res.ok) {
-              return testUrl;
-            }
-          } catch (e) {
-            // Se falhar o teste HEAD, tenta o próximo candidato
-          }
-        }
-
-        // Fallback para a primeira opção se nenhum teste responder
-        return `roms/${name}.${candidates[0]}`;
-      }
-
-      // Inicialização assíncrona
-      (async () => {
-        const romUrl = await resolveRomUrl(gameName, consoleType, explicitExt);
-
-        // Configurações do EmulatorJS
-        window.EJS_player = '#game';
-        window.EJS_core = consoleType;
-        window.EJS_gameName = gameName;
-        window.EJS_gameUrl = romUrl;
-        window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-        window.EJS_allowFullscreen = true;
-
-        // Injeta o script do EmulatorJS
-        const script = document.createElement('script');
-        script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-        document.body.appendChild(script);
-      })();
-
-      // Ação do clique no botão vermelho
+      // Clique no botão vermelho
       document.getElementById('start-screen').addEventListener('click', async () => {
         const elem = document.documentElement;
         if (elem.requestFullscreen) {
