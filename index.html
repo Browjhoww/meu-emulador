@@ -85,48 +85,73 @@
     const consoleType = urlParams.get('console') || 'snes';
 
     if (rawGameParam) {
-      // Separa o nome do jogo e a extensão se enviada na URL
       let gameName = rawGameParam;
-      let customExt = null;
+      let explicitExt = null;
 
+      // Se o usuário digitou a extensão na URL (ex: Aladdin.sfc)
       if (rawGameParam.includes('.')) {
         const parts = rawGameParam.split('.');
-        customExt = parts.pop();
+        explicitExt = parts.pop();
         gameName = parts.join('.');
       }
 
-      // Mapeamento de extensão padrão por console
-      const defaultExtensions = {
-        'snes': 'sfc',
-        'segaMD': 'md',
-        'gba': 'gba',
-        'gbc': 'gbc',
-        'n64': 'z64'
-      };
-
-      const ext = customExt || defaultExtensions[consoleType] || 'sfc';
-
-      // 1. Capa do jogo (procura pela imagem em PNG com o mesmo nome do jogo)
+      // Capa do jogo (ex: roms/Aladdin.png)
       const coverImg = document.getElementById('game-cover');
       coverImg.src = `roms/${gameName}.png`;
       coverImg.onerror = () => { coverImg.style.display = 'none'; };
 
-      // 2. Limpa a URL no navegador
+      // Limpa a URL no navegador
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
-      // Configurações do EmulatorJS
-      EJS_player = '#game';
-      EJS_core = consoleType;
-      EJS_gameUrl = `roms/${gameName}.${ext}`;
-      EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-      EJS_allowFullscreen = true;
+      // Função para validar se o arquivo existe na pasta antes de passar para o emulador
+      async function resolveRomUrl(name, console, explicit) {
+        if (explicit) return `roms/${name}.${explicit}`;
 
-      // Injeta o script de carregamento do emulador
-      const script = document.createElement('script');
-      script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-      document.body.appendChild(script);
+        const extensionsMap = {
+          'snes': ['smc', 'sfc'],
+          'segaMD': ['md'],
+          'gba': ['gba'],
+          'gbc': ['gbc'],
+          'n64': ['z64']
+        };
 
-      // Clique no botão vermelho para rodar
+        const candidates = extensionsMap[console] || ['smc', 'sfc'];
+
+        for (const ext of candidates) {
+          const testUrl = `roms/${name}.${ext}`;
+          try {
+            const res = await fetch(testUrl, { method: 'HEAD' });
+            if (res.ok) {
+              return testUrl;
+            }
+          } catch (e) {
+            // Se falhar o teste HEAD, tenta o próximo candidato
+          }
+        }
+
+        // Fallback para a primeira opção se nenhum teste responder
+        return `roms/${name}.${candidates[0]}`;
+      }
+
+      // Inicialização assíncrona
+      (async () => {
+        const romUrl = await resolveRomUrl(gameName, consoleType, explicitExt);
+
+        // Configurações do EmulatorJS
+        window.EJS_player = '#game';
+        window.EJS_core = consoleType;
+        window.EJS_gameName = gameName;
+        window.EJS_gameUrl = romUrl;
+        window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+        window.EJS_allowFullscreen = true;
+
+        // Injeta o script do EmulatorJS
+        const script = document.createElement('script');
+        script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+        document.body.appendChild(script);
+      })();
+
+      // Ação do clique no botão vermelho
       document.getElementById('start-screen').addEventListener('click', async () => {
         const elem = document.documentElement;
         if (elem.requestFullscreen) {
@@ -146,17 +171,6 @@
         }
 
         document.getElementById('start-screen').style.display = 'none';
-
-        if (consoleType === 'gba' || consoleType === 'gbc') {
-          const checkCanvas = setInterval(() => {
-            const canvas = document.querySelector('#game canvas');
-            if (canvas) {
-              canvas.style.setProperty('margin-top', '150px', 'important');
-              canvas.style.setProperty('position', 'relative', 'important');
-              clearInterval(checkCanvas);
-            }
-          }, 50);
-        }
       });
 
     } else {
