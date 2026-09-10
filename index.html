@@ -1,92 +1,12 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <!-- Adicionadas permissões explicitas para tela cheia e orientação -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Emulador Web</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: #000;
-      overflow: hidden;
-      font-family: sans-serif;
-    }
-    #start-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: #000;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      cursor: pointer;
-    }
-    .start-banner {
-      max-width: 280px;
-      max-height: 200px;
-      width: auto;
-      height: auto;
-      object-fit: contain;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
-    }
-    .btn-start {
-      background-color: #e50914;
-      color: white;
-      padding: 16px 32px;
-      font-size: 1.2rem;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-    }
-    #game-container {
-      width: 100vw;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-    }
-  </style>
-</head>
-<body>
-
-  <!-- Sua Tela Inicial Customizada -->
-  <div id="start-screen">
-    <img id="game-cover" src="" alt="Capa do Jogo" class="start-banner">
-    <button class="btn-start" id="btn-play">INICIAR JOGO</button>
-  </div>
-
-  <div id="game-container">
-    <div id="game" style="width:100%; height:100%;"></div>
-  </div>
-
-  <script>
+<script>
     const urlParams = new URLSearchParams(window.location.search);
-    const gameId = urlParams.get('game');
+    // Remove extensoes caso o usuario tenha digitado na URL por engano
+    let rawGameParam = urlParams.get('game') || '';
+    const gameId = rawGameParam.replace(/\.(smc|sfc|gba|gbc|md|z64)$/i, '');
     const consoleType = urlParams.get('console') || 'snes';
 
     const extensions = {
-      'snes': 'smc',
+      'snes': 'sfc', // Se as suas ROMs de SNES são .sfc, mantemos sfc aqui
       'segaMD': 'md',
       'gba': 'gba',
       'gbc': 'gbc',
@@ -100,33 +20,30 @@
 
       window.history.replaceState({}, document.title, window.location.pathname + "play");
 
-      const ext = extensions[consoleType] || 'smc';
+      const ext = extensions[consoleType] || 'sfc';
 
       // Configurações do EmulatorJS
       EJS_player = '#game';
       EJS_core = consoleType;
+      // Tenta carregar a ROM
       EJS_gameUrl = `roms/${gameId}.${ext}`;
       EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-      
-      // Habilita o botão e suporte a Fullscreen nativo no menu
-      EJS_allowFullscreen = true; 
+      EJS_allowFullscreen = true;
 
       // Injeta o script do emulador
       const script = document.createElement('script');
       script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
       document.body.appendChild(script);
 
-      // Ação ao clicar na sua tela/botão vermelho
+      // Ação ao clicar no botão vermelho
       document.getElementById('start-screen').addEventListener('click', async () => {
-        // Tenta colocar o próprio navegador em Tela Cheia no clique do usuário
         const elem = document.documentElement;
         if (elem.requestFullscreen) {
           elem.requestFullscreen().catch(() => {});
-        } else if (elem.webkitRequestFullscreen) { /* Safari */
+        } else if (elem.webkitRequestFullscreen) {
           elem.webkitRequestFullscreen().catch(() => {});
         }
 
-        // Bloqueio de orientação do dispositivo
         if (screen.orientation && screen.orientation.lock) {
           try {
             if (consoleType === 'gba' || consoleType === 'gbc') {
@@ -137,10 +54,8 @@
           } catch(e) {}
         }
 
-        // Esconde a tela customizada
         document.getElementById('start-screen').style.display = 'none';
 
-        // Ajuste para jogos portáteis no modo retrato
         if (consoleType === 'gba' || consoleType === 'gbc') {
           const checkCanvas = setInterval(() => {
             const canvas = document.querySelector('#game canvas');
@@ -158,6 +73,3 @@
         '<h2 style="color:white;">Nenhum jogo especificado na URL.</h2>';
     }
   </script>
-
-</body>
-</html>
